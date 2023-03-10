@@ -327,6 +327,29 @@ RSpec.describe 'Pipenv support' do
     end
   end
 
+
+  context 'when Pipfile.lock is unchanged since the last build' do
+    let(:app) { Hatchet::Runner.new('spec/fixtures/pipenv_python_version_unspecified') }
+
+    it 're-uses packages from the cache' do
+      app.deploy do |app|
+        app.commit!
+        app.push!
+        expect(clean_output(app.output)).to include(<<~OUTPUT)
+          remote: -----> Python app detected
+          remote: -----> No Python version was specified. Using the same version as the last build: python-#{DEFAULT_PYTHON_VERSION}
+          remote:        To use a different version, see: https://devcenter.heroku.com/articles/python-runtimes
+          remote: -----> No change in requirements detected, installing from cache
+          remote: -----> Using cached install of python-#{DEFAULT_PYTHON_VERSION}
+          remote: -----> Installing pip #{PIP_VERSION}, setuptools #{SETUPTOOLS_VERSION} and wheel #{WHEEL_VERSION}
+          remote: -----> Installing SQLite3
+          remote: -----> Installing requirements with pip
+          remote: -----> Discovering process types
+        OUTPUT
+      end
+    end
+  end
+
   context 'when there is both a Pipfile.lock and a requirements.txt' do
     let(:app) { Hatchet::Runner.new('spec/fixtures/pipenv_and_requirements_txt') }
 
